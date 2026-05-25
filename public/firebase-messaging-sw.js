@@ -8,12 +8,12 @@ importScripts('https://www.gstatic.com/firebasejs/10.12.0/firebase-messaging-com
 // ⚠️  Replace these values with your actual Firebase project config.
 // These are public values — it is safe to have them here.
 firebase.initializeApp({
-  apiKey: "AIzaSyAoy1ioPeDBhvOajc5uEgPC73b_gNPXRj4",        // replace or use literal string
-  authDomain: "nexus-chat-171a6.firebaseapp.com",
-  projectId: "nexus-chat-171a6",
-  storageBucket: "nexus-chat-171a6.firebasestorage.app",
-  messagingSenderId: "149619227135",
-  appId: "1:149619227135:web:0dee1e4732695ca522cfca",
+        apiKey: process.env.NEXT_PUBLIC_FIREBASE_API_KEY,
+        authDomain: process.env.NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN,
+        projectId: process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID,
+        storageBucket: process.env.NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET,
+        messagingSenderId: process.env.NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID,
+        appId: process.env.NEXT_PUBLIC_FIREBASE_APP_ID,
 });
 
 const messaging = firebase.messaging();
