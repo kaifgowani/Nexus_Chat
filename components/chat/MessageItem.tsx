@@ -167,8 +167,8 @@ export default function MessageItem({ message, isConsecutive, senderProfile, cur
         {isOwnMessage && !isDeleted && (
           <div className="flex justify-end mt-0.5">
             {isReadByOthers
-              ? <CheckCheck className="h-3 w-3 text-indigo-400" title="Seen" />
-              : <Check className="h-3 w-3 text-slate-600" title="Sent" />
+              ? <CheckCheck className="h-3 w-3 text-indigo-400" />
+              : <Check className="h-3 w-3 text-slate-600" />
             }
           </div>
         )}
