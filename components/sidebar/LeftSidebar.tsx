@@ -1,6 +1,6 @@
 'use client';
 
-import { Shield, Hash, X, Plus, Lock, LogOut, Settings } from 'lucide-react';
+import { Shield, Hash, X, Plus, Lock, LogOut, Settings, Compass } from 'lucide-react';
 import type { Group, UserProfile } from '@/lib/types';
 
 interface Props {
@@ -13,6 +13,7 @@ interface Props {
   onSelectGroup: (id: string) => void;
   onCloseSidebar: () => void;
   onOpenCreateChannel: () => void;
+  onOpenBrowseChannels: () => void;
   onOpenSettings: () => void;
   onOpenChannelSettings: (group: Group) => void;
   onSignOut: () => void;
@@ -21,11 +22,13 @@ interface Props {
 export default function LeftSidebar({
   currentUserProfile, users, groups, currentGroupId, currentUserId,
   isSidebarOpen, onSelectGroup, onCloseSidebar, onOpenCreateChannel,
-  onOpenSettings, onOpenChannelSettings, onSignOut,
+  onOpenBrowseChannels, onOpenSettings, onOpenChannelSettings, onSignOut,
 }: Props) {
-  const publicChannels = groups.filter(
-    g => g.type === 'channel' && (!g.isPrivate || g.members?.includes(currentUserId))
+  // Only show channels the user is a member of
+  const myChannels = groups.filter(
+    g => g.type === 'channel' && g.members?.includes(currentUserId)
   );
+
   const directMessages = groups.filter(
     g => g.type === 'dm' && g.members?.includes(currentUserId)
   );
@@ -49,25 +52,41 @@ export default function LeftSidebar({
         <div className="mb-6">
           <div className="px-4 flex items-center justify-between group mb-2">
             <span className="text-xs font-bold text-slate-500 uppercase tracking-wider">Channels</span>
-            <button onClick={onOpenCreateChannel}
-              className="text-slate-400 hover:text-white opacity-0 group-hover:opacity-100 transition-opacity" title="New channel">
-              <Plus className="h-4 w-4" />
-            </button>
+            <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+              {/* Browse public channels */}
+              <button onClick={onOpenBrowseChannels}
+                className="text-slate-400 hover:text-white" title="Browse channels">
+                <Compass className="h-4 w-4" />
+              </button>
+              {/* Create new channel */}
+              <button onClick={onOpenCreateChannel}
+                className="text-slate-400 hover:text-white" title="New channel">
+                <Plus className="h-4 w-4" />
+              </button>
+            </div>
           </div>
-          <ul className="space-y-px px-2">
-            {publicChannels.map(channel => {
-              const isAdmin = channel.admins?.includes(currentUserId) || channel.createdBy === currentUserId;
-              return (
+
+          {myChannels.length === 0 ? (
+            <div className="px-4 py-2">
+              <button onClick={onOpenBrowseChannels}
+                className="w-full text-xs text-slate-500 hover:text-indigo-400 flex items-center gap-2 py-2 transition-colors">
+                <Compass className="h-4 w-4" /> Browse channels
+              </button>
+            </div>
+          ) : (
+            <ul className="space-y-px px-2">
+              {myChannels.map(channel => (
                 <li key={channel.id}>
                   <div className={`flex items-center rounded-md transition-colors group/item ${currentGroupId === channel.id ? 'bg-indigo-600/10' : 'hover:bg-slate-800'}`}>
                     <button
                       onClick={() => { onSelectGroup(channel.id); onCloseSidebar(); }}
                       className={`flex-1 flex items-center gap-2 px-2 py-2 text-left text-sm ${currentGroupId === channel.id ? 'text-indigo-400 font-medium' : 'text-slate-400 group-hover/item:text-slate-200'}`}
                     >
-                      {channel.isPrivate ? <Lock className="h-4 w-4 flex-shrink-0" /> : <Hash className="h-4 w-4 flex-shrink-0" />}
+                      {channel.isPrivate
+                        ? <Lock className="h-4 w-4 flex-shrink-0" />
+                        : <Hash className="h-4 w-4 flex-shrink-0" />}
                       <span className="truncate">{channel.name}</span>
                     </button>
-                    {/* Settings gear — visible on hover, for all members */}
                     <button
                       onClick={() => onOpenChannelSettings(channel)}
                       className="pr-2 opacity-0 group-hover/item:opacity-100 transition-opacity text-slate-500 hover:text-slate-300"
@@ -77,9 +96,9 @@ export default function LeftSidebar({
                     </button>
                   </div>
                 </li>
-              );
-            })}
-          </ul>
+              ))}
+            </ul>
+          )}
         </div>
 
         {/* DMs */}

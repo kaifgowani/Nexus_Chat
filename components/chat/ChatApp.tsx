@@ -25,6 +25,7 @@ import UserProfileModal from '@/components/modals/UserProfileModal';
 import ReportModal from '@/components/modals/ReportModal';
 import CreateChannelModal from '@/components/modals/CreateChannelModal';
 import ChannelSettingsModal from '@/components/modals/ChannelSettingsModal';
+import BrowseChannelsModal from '@/components/modals/BrowseChannelsModal';
 
 import type { ToastMsg, UserProfile, Message, Group } from '@/lib/types';
 
@@ -47,6 +48,7 @@ export default function ChatApp() {
   const [selectedUser, setSelectedUser] = useState<UserProfile | null>(null);
   const [reportTarget, setReportTarget] = useState<Message | null>(null);
   const [channelSettingsGroup, setChannelSettingsGroup] = useState<Group | null>(null);
+  const [isBrowseChannelsOpen, setIsBrowseChannelsOpen] = useState(false);
 
   usePresence(user?.uid);
   const { onInputChange: onTypingChange } = useTyping(currentGroupId, user?.uid, currentUserProfile?.name);
@@ -187,6 +189,15 @@ export default function ChatApp() {
         <CreateChannelModal userId={user.uid} onClose={() => setIsCreateChannelOpen(false)}
           onCreated={setCurrentGroupId} showToast={showToast} />
       )}
+      {isBrowseChannelsOpen && (
+        <BrowseChannelsModal
+          groups={groups}
+          currentUserId={user.uid}
+          showToast={showToast}
+          onClose={() => setIsBrowseChannelsOpen(false)}
+          onJoined={setCurrentGroupId}
+        />
+      )}
       {reportTarget && (
         <ReportModal message={reportTarget} currentUserProfile={currentUserProfile}
           showToast={showToast} onClose={() => setReportTarget(null)} />
@@ -216,6 +227,7 @@ export default function ChatApp() {
         onOpenCreateChannel={() => setIsCreateChannelOpen(true)}
         onOpenSettings={() => setIsSettingsOpen(true)}
         onOpenChannelSettings={setChannelSettingsGroup}
+        onOpenBrowseChannels={() => setIsBrowseChannelsOpen(true)}
         onSignOut={handleSignOut}
       />
 

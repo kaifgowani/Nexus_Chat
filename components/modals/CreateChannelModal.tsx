@@ -34,13 +34,18 @@ export default function CreateChannelModal({ userId, onClose, onCreated, showToa
         createdAt: Date.now(),
         createdBy: userId,
         isPrivate,
-        ...(isPrivate ? { inviteCode: generateInviteCode(), members: [userId] } : {}),
+        members: [userId],   // creator is always first member
+        admins: [userId],    // creator is always first admin
+        ...(isPrivate ? { inviteCode: generateInviteCode() } : {}),
       });
       onCreated(newGroup.id);
       showToast('Channel Created', `#${cleanName} has been created.`, 'success');
       onClose();
-    } catch (err: any) { showToast('Error', err.message, 'error'); }
-    finally { setLoading(false); }
+    } catch (err: any) {
+      showToast('Error', err.message, 'error');
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -59,12 +64,11 @@ export default function CreateChannelModal({ userId, onClose, onCreated, showToa
               className="w-full px-4 py-3 bg-slate-950 border border-slate-800 text-white rounded-lg focus:ring-1 focus:ring-indigo-500 outline-none" autoFocus required />
           </div>
 
-          {/* Visibility toggle */}
           <div className="mb-6">
             <label className="block text-sm font-medium text-slate-400 mb-3">Visibility</label>
             <div className="flex gap-3">
               {[
-                { value: false, icon: <Globe className="h-4 w-4" />, label: 'Public', desc: 'Anyone can join' },
+                { value: false, icon: <Globe className="h-4 w-4" />, label: 'Public', desc: 'Users can search and join' },
                 { value: true, icon: <Lock className="h-4 w-4" />, label: 'Private', desc: 'Invite only' },
               ].map(opt => (
                 <button type="button" key={opt.label} onClick={() => setIsPrivate(opt.value)}
@@ -80,7 +84,7 @@ export default function CreateChannelModal({ userId, onClose, onCreated, showToa
 
           {isPrivate && (
             <div className="bg-slate-950 border border-slate-800 rounded-lg p-3 mb-5">
-              <p className="text-xs text-slate-400">An invite code will be generated automatically. Share it with people you want to invite.</p>
+              <p className="text-xs text-slate-400">An invite code will be generated automatically. Share it from Channel Settings.</p>
             </div>
           )}
 
