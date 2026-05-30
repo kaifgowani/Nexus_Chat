@@ -2,19 +2,19 @@
 
 export interface UserProfile {
   id: string;
-  handle: string;         // Unique @handle, e.g. "alex99"
+  handle: string;
   name: string;
   email: string;
   photoURL?: string;
   statusText?: string;
   isOnline: boolean;
-  lastSeen?: number;      // Unix ms — updated every minute while active
+  lastSeen?: number;
   joinedAt: number;
   role: 'admin' | 'user';
   mfaEnabled: boolean;
-  friends: string[];      // Array of user IDs
-  blocked: string[];      // Array of blocked user IDs
-  fcmToken?: string;      // Firebase Cloud Messaging token for push notifications
+  friends: string[];
+  blocked: string[];
+  fcmToken?: string;
 }
 
 export interface Group {
@@ -23,9 +23,10 @@ export interface Group {
   type: 'channel' | 'dm';
   createdAt: number;
   createdBy?: string;
-  members?: string[];     // Used for DMs
-  isPrivate?: boolean;    // Private channels require an invite
-  inviteCode?: string;    // Shareable join code for private channels
+  members?: string[];     // Used for DMs and private channels
+  admins?: string[];      // userIds with admin privileges in this channel
+  isPrivate?: boolean;
+  inviteCode?: string;
 }
 
 export interface Message {
@@ -35,25 +36,20 @@ export interface Message {
   senderId: string;
   senderName: string;
   createdAt: number;
-  // Media
   mediaURL?: string;
   mediaType?: 'image' | 'video' | 'file';
   mediaName?: string;
-  // Link Preview (populated by Cloud Function)
   linkPreview?: {
     url: string;
     title: string;
     description: string;
     image: string;
   };
-  // Engagement
-  readBy?: string[];                          // Array of userIds who've seen this message
-  reactions?: Record<string, string[]>;       // e.g. { "👍": ["uid1","uid2"], "❤️": ["uid3"] }
-  // Moderation
+  readBy?: string[];
+  reactions?: Record<string, string[]>;
   isDeleted?: boolean;
   isEdited?: boolean;
   editedAt?: number;
-  // Threading
   replyToId?: string;
   replyToText?: string;
   replyToSender?: string;
@@ -64,6 +60,18 @@ export interface TypingEntry {
   userId: string;
   userName: string;
   timestamp: number;
+}
+
+// ─── Invites ──────────────────────────────────────────────────────────────────
+export interface Invite {
+  id: string;
+  groupId: string;
+  groupName: string;
+  senderId: string;
+  senderName: string;
+  recipientId: string;
+  status: 'pending' | 'accepted' | 'declined';
+  createdAt: number;
 }
 
 // ─── Moderation ───────────────────────────────────────────────────────────────

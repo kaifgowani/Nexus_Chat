@@ -3,16 +3,17 @@
 import { useState, useCallback } from 'react';
 import { signOut } from 'firebase/auth';
 import { addDoc, collection, doc, setDoc } from 'firebase/firestore';
-import { Menu, Shield, Users, MessageCircle } from 'lucide-react';
+import { Menu, Shield, Users } from 'lucide-react';
 
 import { auth, db } from '@/lib/firebase';
-import { useAuth } from '@/hooks/useAUTH';
+import { useAuth } from '@/hooks/useAuth';
 import { usePresence } from '@/hooks/usePresence';
-import { useTyping, useTypingSubscription } from '@/hooks/useTYPING';
+import { useTyping, useTypingSubscription } from '@/hooks/useTyping';
 
 import AuthScreen from '@/components/auth/AuthScreen';
 import ProfileSetupView from '@/components/auth/ProfileSetupView';
 import { ToastContainer } from '@/components/ui/Toast';
+import InvitesPanel from '@/components/ui/InvitesPanel';
 import LeftSidebar from '@/components/sidebar/LeftSidebar';
 import RightSidebar from '@/components/sidebar/RightSidebar';
 import MessageList from '@/components/chat/MessageList';
@@ -23,12 +24,10 @@ import SearchModal from '@/components/modals/SearchModal';
 import UserProfileModal from '@/components/modals/UserProfileModal';
 import ReportModal from '@/components/modals/ReportModal';
 import CreateChannelModal from '@/components/modals/CreateChannelModal';
-import { useFCMToken } from '@/hooks/useFCMToken';
-
+import ChannelSettingsModal from '@/components/modals/ChannelSettingsModal';
 
 import type { ToastMsg, UserProfile, Message, Group } from '@/lib/types';
 
-// ── URL detection helper ───────────────────────────────────────────────────────
 function detectURL(text: string): string | null {
   const match = text.match(/https?:\/\/[^\s]+/);
   return match ? match[0] : null;
@@ -37,7 +36,6 @@ function detectURL(text: string): string | null {
 export default function ChatApp() {
   const { user, authLoading, profileLoaded, currentUserProfile, users, groups, messages } = useAuth();
 
-  // ── UI state ────────────────────────────────────────────────────────────────
   const [currentGroupId, setCurrentGroupId] = useState<string | null>(null);
   const [newMessage, setNewMessage] = useState('');
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
@@ -48,13 +46,12 @@ export default function ChatApp() {
   const [isCreateChannelOpen, setIsCreateChannelOpen] = useState(false);
   const [selectedUser, setSelectedUser] = useState<UserProfile | null>(null);
   const [reportTarget, setReportTarget] = useState<Message | null>(null);
+  const [channelSettingsGroup, setChannelSettingsGroup] = useState<Group | null>(null);
 
-  // ── Hooks ──────────────────────────────────────────────────────────────────
   usePresence(user?.uid);
   const { onInputChange: onTypingChange } = useTyping(currentGroupId, user?.uid, currentUserProfile?.name);
   const typingUsers = useTypingSubscription(currentGroupId, user?.uid);
 
-  // ── Toast helper ───────────────────────────────────────────────────────────
   const showToast = useCallback((title: string, text: string, type: 'success' | 'error' | 'info' = 'info') => {
     const id = Date.now();
     setToasts(prev => [...prev, { id, title, text, type }]);
@@ -65,7 +62,6 @@ export default function ChatApp() {
     setToasts(prev => prev.filter(t => t.id !== id));
   }, []);
 
-  // ── Derived data ───────────────────────────────────────────────────────────
   const currentGroupMessages = messages.filter(
     m => m.groupId === currentGroupId && !currentUserProfile?.blocked?.includes(m.senderId)
   );
@@ -77,10 +73,9 @@ export default function ChatApp() {
     if (group.type !== 'dm') return `# ${group.name}`;
     const otherId = group.members?.find(id => id !== user?.uid);
     const other = users.find(u => u.id === otherId);
-    return other ? `@${other.handle}` : '@ Unknown';
+    return other ? `@ ${other.handle}` : '@ Unknown';
   };
 
-  // ── Actions ────────────────────────────────────────────────────────────────
   const handleStartDM = async (targetUserId: string) => {
     if (!user || targetUserId === user.uid) return;
     if (currentUserProfile?.blocked?.includes(targetUserId)) {
@@ -96,7 +91,7 @@ export default function ChatApp() {
       });
       setCurrentGroupId(dm.id);
       setIsUsersSidebarOpen(false);
-    } catch (err: any) { showToast('Error', 'Failed to start conversation.', 'error'); }
+    } catch { showToast('Error', 'Failed to start conversation.', 'error'); }
   };
 
   const handleSendMessage = async (
@@ -109,7 +104,6 @@ export default function ChatApp() {
     if (!currentGroupId || !user || !currentUserProfile) return;
     if (!newMessage.trim() && !mediaURL) return;
 
-    // Block check for DMs
     const group = groups.find(g => g.id === currentGroupId);
     if (group?.type === 'dm') {
       const otherId = group.members?.find(id => id !== user.uid);
@@ -121,8 +115,6 @@ export default function ChatApp() {
 
     const text = newMessage.trim();
     setNewMessage('');
-
-    // Detect URL for link preview (Cloud Function will populate later)
     const detectedURL = text ? detectURL(text) : null;
 
     try {
@@ -149,7 +141,6 @@ export default function ChatApp() {
     } catch (err: any) { showToast('Sign Out Error', err.message, 'error'); }
   };
 
-  // ── Loading states ─────────────────────────────────────────────────────────
   if (authLoading) {
     return (
       <div className="flex h-screen w-full items-center justify-center bg-slate-950">
@@ -176,14 +167,12 @@ export default function ChatApp() {
 
   if (!currentUserProfile) return <ProfileSetupView user={user} showToast={showToast} />;
 
-  // ── Main render ────────────────────────────────────────────────────────────
   return (
     <div className="flex h-screen w-full bg-slate-900 text-slate-200 overflow-hidden font-sans selection:bg-indigo-500/30">
 
-      {/* Toast notifications */}
       <ToastContainer toasts={toasts} dismiss={dismissToast} />
 
-      {/* Global Modals */}
+      {/* Modals */}
       {isSettingsOpen && (
         <SettingsModal user={user} currentUserProfile={currentUserProfile} showToast={showToast} onClose={() => setIsSettingsOpen(false)} />
       )}
@@ -202,6 +191,17 @@ export default function ChatApp() {
         <ReportModal message={reportTarget} currentUserProfile={currentUserProfile}
           showToast={showToast} onClose={() => setReportTarget(null)} />
       )}
+      {channelSettingsGroup && (
+        <ChannelSettingsModal
+          group={channelSettingsGroup}
+          currentUserProfile={currentUserProfile}
+          users={users}
+          showToast={showToast}
+          onClose={() => setChannelSettingsGroup(null)}
+          onDeleted={() => { setCurrentGroupId(null); setChannelSettingsGroup(null); }}
+          onLeft={() => { setCurrentGroupId(null); setChannelSettingsGroup(null); }}
+        />
+      )}
 
       {/* Left Sidebar */}
       <LeftSidebar
@@ -215,12 +215,12 @@ export default function ChatApp() {
         onCloseSidebar={() => setIsSidebarOpen(false)}
         onOpenCreateChannel={() => setIsCreateChannelOpen(true)}
         onOpenSettings={() => setIsSettingsOpen(true)}
+        onOpenChannelSettings={setChannelSettingsGroup}
         onSignOut={handleSignOut}
       />
 
       {/* Center: Chat Area */}
       <div className="flex-1 flex flex-col min-w-0 bg-slate-900">
-        {/* Chat header */}
         <header className="h-14 border-b border-slate-800 flex items-center justify-between px-4 bg-slate-900/95 backdrop-blur z-10 flex-shrink-0">
           <div className="flex items-center gap-3">
             <button className="md:hidden p-1.5 text-slate-400 hover:bg-slate-800 rounded-md" onClick={() => setIsSidebarOpen(true)}>
@@ -231,12 +231,19 @@ export default function ChatApp() {
               : <h2 className="font-bold text-slate-400">Select a chat</h2>
             }
           </div>
-          <button className="lg:hidden p-1.5 text-slate-400 hover:bg-slate-800 rounded-md" onClick={() => setIsUsersSidebarOpen(p => !p)}>
-            <Users className="h-5 w-5" />
-          </button>
+          <div className="flex items-center gap-1">
+            {/* Invites bell */}
+            <InvitesPanel
+              userId={user.uid}
+              showToast={showToast}
+              onJoined={(groupId) => setCurrentGroupId(groupId)}
+            />
+            <button className="lg:hidden p-1.5 text-slate-400 hover:bg-slate-800 rounded-md" onClick={() => setIsUsersSidebarOpen(p => !p)}>
+              <Users className="h-5 w-5" />
+            </button>
+          </div>
         </header>
 
-        {/* Messages */}
         {currentGroupId ? (
           <div className="flex-1 flex flex-col min-h-0">
             <div className="flex-1 min-h-0">
