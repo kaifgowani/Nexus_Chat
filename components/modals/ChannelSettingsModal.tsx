@@ -180,7 +180,7 @@ export default function ChannelSettingsModal({
               )}
 
               {/* Invite code (private channels only) */}
-              {group.isPrivate && group.inviteCode && (
+              {group.inviteCode && (
                 <div>
                   <label className="block text-xs font-medium text-slate-400 mb-2">Invite Code</label>
                   <div className="flex items-center gap-2 bg-slate-950 border border-slate-800 rounded-lg px-3 py-2">

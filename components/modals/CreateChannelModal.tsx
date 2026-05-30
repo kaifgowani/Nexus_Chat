@@ -36,7 +36,7 @@ export default function CreateChannelModal({ userId, onClose, onCreated, showToa
         isPrivate,
         members: [userId],   // creator is always first member
         admins: [userId],    // creator is always first admin
-        ...(isPrivate ? { inviteCode: generateInviteCode() } : {}),
+        inviteCode: generateInviteCode(),
       });
       onCreated(newGroup.id);
       showToast('Channel Created', `#${cleanName} has been created.`, 'success');
