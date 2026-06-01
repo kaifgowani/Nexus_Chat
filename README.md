@@ -1,6 +1,6 @@
 # Nexus Connect 🔐
 
-A production-grade real-time messaging application built with Next.js 14 and Firebase. Features end-to-end communication enrichment, multimedia support, moderation tools, and advanced social features.
+A full-featured real-time messaging application built with Next.js 14 and Firebase. Features end-to-end communication enrichment, multimedia support, moderation tools, and advanced social features.
 
 **Tech Stack:** Next.js 14, TypeScript, Firebase (Firestore, Auth, Storage, Cloud Functions, FCM), Tailwind CSS, React Virtuoso
 
